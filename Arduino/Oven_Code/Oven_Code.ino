@@ -2,6 +2,9 @@
 #include "functions.h"
 
 void setup() {
+  /* Use Supply voltage for measuring the ADC value */
+  analogReference(EXTERNAL);
+  
   /* LDC Set up as 16 columns and 2 rows */
   lcd.begin(16, 2);
 

@@ -3,7 +3,7 @@
 
 void setup() {
   /* Use Supply voltage for measuring the ADC value */
-  analogReference(EXTERNAL);
+  //analogReference(EXTERNAL);
   
   /* LDC Set up as 16 columns and 2 rows */
   lcd.begin(16, 2);
@@ -173,7 +173,7 @@ void loop() {
       } 
       /* The next 5 else if statements:
          changing the PWM based on the temperature closer to the setpoint  */
-      else if (Temp >= TEMP_SOAK - 10) {
+      else if (Temp >= TEMP_SOAK - 5) {
         PWM = 0;
       }
       else if (Temp >= TEMP_SOAK - 25) {

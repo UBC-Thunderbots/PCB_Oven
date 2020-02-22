@@ -85,34 +85,31 @@ void printTime(void) {
  */
 double readTemp ( void ) {
   /* This is using a TMP36 Sensor - this code should be changed if using a different sensor */
-  double ADC_0;
-  double ADC_1;
-  double TOTAL_0,TOTAL_1;
-  double RAIL_5V;
+  double ADC_0=0;
+  double ADC_1=0;
+  double TOTAL_0=0,TOTAL_1=0;
+  double ADC_HJ0;
+  double ADC_CJ1;
   
-  /* software adjust */
-  for ( int i = 0; i < 25; i++) {
-    /* Read Cold and Hot Junction Temperature */
-    ADC_1 = analogRead(THERMO_CJ_PIN);
+  for (int i = 0; i < 100; i++){
     ADC_0 = analogRead(THERMO_HJ_PIN);
+    ADC_1 = analogRead(THERMO_CJ_PIN);
+
     TOTAL_0 += ADC_0;
     TOTAL_1 += ADC_1;
   }
-  double ADC_CJ1 = TOTAL_1/25.0; // Cold Junction ADC value after software adjust
-  double ADC_HJ0 = TOTAL_0/25.0; // Hot Junction ADC value after software adjust
 
-  /* Another software adjust (probably not needed if not drawing too much current) */
-  RAIL_5V = analogRead(RAIL_5V) * 5.0/1023.0;
-
+  ADC_HJ0 = TOTAL_0 / 100.0;
+  ADC_CJ1 = TOTAL_1 / 100.0;
+  
   // convert cold junction voltage to temperature
-  double Vc = ADC_CJ1 * RAIL_5V/1023.0;
+  double Vc = ADC_CJ1 * 5.0/1023.0;
   double Tc = (Vc - 0.5)*100.0; // from TMP36 datasheet
-  double Vh = ADC_HJ0 * RAIL_5V/1023.0;
+  double Vh = ADC_HJ0 * 5.0/1023.0;
   double Th = Vh /(0.000041 * 100000/330); // 41uV/C is approximate temperature relation slope, R2 = 100K, R1 = 330
   
   /* Approx Temperature is Cold + Hot */
   double Temp = Tc+Th;
-
   return Temp;
 }
 

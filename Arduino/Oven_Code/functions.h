@@ -91,7 +91,7 @@ double readTemp ( void ) {
   double ADC_HJ0;
   double ADC_CJ1;
   
-  for (int i = 0; i < 100; i++){
+  for (int i = 0; i < 1000; i++){
     ADC_0 = analogRead(THERMO_HJ_PIN);
     ADC_1 = analogRead(THERMO_CJ_PIN);
 
@@ -99,8 +99,8 @@ double readTemp ( void ) {
     TOTAL_1 += ADC_1;
   }
 
-  ADC_HJ0 = TOTAL_0 / 100.0;
-  ADC_CJ1 = TOTAL_1 / 100.0;
+  ADC_HJ0 = TOTAL_0 / 1000.0;
+  ADC_CJ1 = TOTAL_1 / 1000.0;
   
   // convert cold junction voltage to temperature
   double Vc = ADC_CJ1 * 5.0/1023.0;

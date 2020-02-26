@@ -19,6 +19,7 @@ One test graph is shown below, created with python:
 #### Step 2: Arduino IDE
 - Install the Arduino IDE, in case the code needs to be re-flashed onto the controller
 - Plug in the USB Blaster cable to the Arduino, and check if you see the display on the LCD (currently sorta broken but this would be the case usually, with a good LCD)
+- Re-flash the code if you aren't sure
 
 #### Step 3: Run the Python Script or PuTTY on the correct COM port
 - Python brings up a graph that plots the temperature vs time

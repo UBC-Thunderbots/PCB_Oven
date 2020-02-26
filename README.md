@@ -8,10 +8,10 @@ The current system is shown below:
 
 One test graph is shown below, created with python:
 
-![](Images/Reflow Graphs/Reflow_test_8)
-![](Images/Reflow Graphs/Reflow_test_9)
-![](Images/Reflow Graphs/Reflow_test_10)
-![](Images/Reflow Graphs/Reflow_test_11)
+![](Images/Reflow Graphs/Reflow_test_8.png)
+![](Images/Reflow Graphs/Reflow_test_9.png)
+![](Images/Reflow Graphs/Reflow_test_10.png)
+![](Images/Reflow Graphs/Reflow_test_11.png)
 
 # How to use the Controller
 

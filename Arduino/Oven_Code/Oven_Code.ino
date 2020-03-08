@@ -114,11 +114,11 @@ void loop() {
         seconds = 0;
         minutes = 0;
         state = 1;
-        Serial.println(0); // Set temp to zero temporarily to get a Tickmark in the graph for the start time
+        //Serial.println(0); // Set temp to zero temporarily to get a Tickmark in the graph for the start time
         
         /* Display next State message */
         //lcd.setCursor(0,0);
-        Serial.println("S:1 Ramp to Soak");
+        //Serial.println("S:1 Ramp to Soak");
         /* Display the current time from start of the reflow process in Minutes:seconds */
         printTime();
 
@@ -137,9 +137,9 @@ void loop() {
       if (Temp <= AB_TEMP && minutes >= 1 && seconds >= 20) {
         /* Abort Message */
         lcd.setCursor(0, 0);
-        Serial.println("System Aborted  ");
+        //Serial.println("System Aborted  ");
         lcd.setCursor(0,1);
-        Serial.println("Check TC        ");
+        //Serial.println("Check TC        ");
         
         /* Beep */
         tone(BUZZER_PIN,2048,3000);
@@ -160,7 +160,7 @@ void loop() {
       else if (Temp >= TEMP_SOAK) {
         /* Display State Message */
       //  lcd.setCursor(0,0);
-        Serial.println("S:2 Soak            ");
+        //Serial.println("S:2 Soak            ");
 
         PWM = 0;
         
@@ -194,7 +194,7 @@ void loop() {
       if ( sec >= TIME_SOAK) {
         /* Display State Message */
         lcd.setCursor(0,0);
-        Serial.println("S:3 Ramp to Peak    ");
+        //Serial.println("S:3 Ramp to Peak    ");
 
         PWM = 100;
 
@@ -214,7 +214,7 @@ void loop() {
       if (Temp >= TEMP_REFL) {
         /* Display State Message */
         lcd.setCursor(0,0);
-        Serial.println("S:4 Reflow          ");
+        //Serial.println("S:4 Reflow          ");
 
         PWM = 10; // 30% PWM
         printTime();
@@ -234,7 +234,7 @@ void loop() {
       if (sec >= TIME_REFL) {
         /* Display State Message */
         lcd.setCursor(0,0);
-        Serial.println("S:5 Cooling         ");
+        //Serial.println("S:5 Cooling         ");
         
         PWM = 0;
         printTime();
@@ -248,9 +248,9 @@ void loop() {
         PWM = 0;
         /* Display Abort message */
         lcd.setCursor(0, 0);
-        Serial.println("Abort           ");
+        //Serial.println("Abort           ");
         lcd.setCursor(0,1);
-        Serial.println("Temp too hot    ");
+        //Serial.println("Temp too hot    ");
         buzzer_ms = 3000;
         tone(BUZZER_PIN,2048,3000);
         delay(2000); // Delay for message before clear

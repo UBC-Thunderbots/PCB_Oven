@@ -106,7 +106,7 @@ double readTemp ( void ) {
   double Vc = ADC_CJ1 * 5.0/1023.0;
   double Tc = (Vc - 0.5)*100.0; // from TMP36 datasheet
   double Vh = ADC_HJ0 * 5.0/1023.0;
-  double Th = Vh /(0.000041 * 100000/330); // 41uV/C is approximate temperature relation slope, R2 = 100K, R1 = 330
+  double Th = Vh /(0.000041 * 100000.0/330.0); // 41uV/C is approximate temperature relation slope, R2 = 100K, R1 = 330
   
   /* Approx Temperature is Cold + Hot */
   double Temp = Tc+Th;

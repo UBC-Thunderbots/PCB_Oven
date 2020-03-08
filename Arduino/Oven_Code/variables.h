@@ -29,8 +29,8 @@ LiquidCrystal lcd(LCD_RS,LCD_RW,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7);
 #define AB_TEMP 50
 #define TEMP_SOAK 150  //Set to 150C
 #define TIME_SOAK 60 //Set to 60s
-#define TEMP_REFL 217 //Set to 217C
-#define TEMP_ABRT 235 //Set to 235C
+#define TEMP_REFL 220 //Set to 217C
+#define TEMP_ABRT 240 //Set to 235C
 #define TIME_REFL 45  //Set to 45s
 #define TEMP_COOL 60  //Set to 60C
 

@@ -7,6 +7,9 @@ void ABORT_M(void);
 void printTemp(void);
 void printTime(void);
 double readTemp (void);
+double C_to_mV(double tempC);
+double mV_to_C(double mVolts, double ColdJunctionTemp);
+double PolyEval(double lst[],double x);
 void coolingLoop(void);
 
 /* ISR for External Interrupt 1 */
@@ -91,7 +94,7 @@ double readTemp ( void ) {
   double ADC_HJ0;
   double ADC_CJ1;
   
-  for (int i = 0; i < 100; i++){
+  for (int i = 0; i < 1000; i++){
     ADC_0 = analogRead(THERMO_HJ_PIN);
     ADC_1 = analogRead(THERMO_CJ_PIN);
 
@@ -99,8 +102,8 @@ double readTemp ( void ) {
     TOTAL_1 += ADC_1;
   }
 
-  ADC_HJ0 = TOTAL_0 / 100.0;
-  ADC_CJ1 = TOTAL_1 / 100.0;
+  ADC_HJ0 = TOTAL_0 / 1000.0;
+  ADC_CJ1 = TOTAL_1 / 1000.0;
 
     /*
   Code converted from python to arduino, simplifying tasks
@@ -118,29 +121,41 @@ double readTemp ( void ) {
   for example: a3*x^3+a2*x^2+a1*x+a0 = ((a3*x+a2)x+a1)x+a0
   https://www.keysight.com/upload/cmc_upload/All/5306OSKR-MXD-5501-040107_2.htm?&amp&cc=CA&lc=eng
   */
-  
-  // 0 C to 500 C: 0 mV to 20.644 mV
-  int len = 10;
-  double lst[len] = {0, 25.08355, 0.078601060, -0.25031310,
-               0.0831527, -0.01228034, 0.0009804036, -0.000044130300,
-               0.000001057734, -0.00000001052755};
 
-  
   // convert cold junction voltage to temperature
   double Vc = ADC_CJ1 * 5.0/1023.0;
-  //double Tc = (Vc - 0.5)*100.0; // from TMP36 datasheet
+  double Tc = (Vc - 0.5)*100.0; // from TMP36 datasheet
   double Vh = ADC_HJ0 * 5.0/1023.0;
-  
-  double total = 0; 
-  for ( int i=len ;i > 0 ; i--) {
-      total = total * (Vh*1000+Vc*1000) + lst[i-1];
-      Serial.println(total);
-  }
+  double Temp = mV_to_C(Vh*1000/(100000.0/330.0),Tc);
   //double Th = Vh /(0.000041 * 100000.0/330.0); // 41uV/C is approximate temperature relation slope, R2 = 100K, R1 = 330
   
   /* Approx Temperature is Cold + Hot */
-  double Temp = total;
   return Temp;
+}
+//   0 C to 500 C: 0 mV to 20.644 mV
+double mV_to_C_2[] = {0, 25.08355, 0.078601060, -0.25031310,
+               0.0831527, -0.01228034, 0.0009804036, -0.000044130300,
+               0.000001057734, -0.00000001052755};
+//   0 C to 1372 C
+double C_to_mV_2[] = { -0.176004136860E-1, 0.389212049750E-1, 0.185587700320E-4, -0.994575928740E-7,
+              0.318409457190E-9, -0.560728448890E-12, 0.560750590590E-15, -0.320207200030E-18,
+              0.971511471520E-22, -0.121047212750E-25};
+double a[3] = {0.1185976, -0.118343200000E-3, 0.126968600000E3};
+
+double C_to_mV(double tempC) {
+  return PolyEval(C_to_mV_2, tempC) + a[0] * exp(a[1] * (tempC - a[2]) * (tempC - a[2]));
+}
+double mV_to_C(double mVolts, double ColdJunctionTemp){
+  double total = mVolts + C_to_mV(ColdJunctionTemp);
+  return PolyEval(mV_to_C_2,ColdJunctionTemp);
+}
+        
+double PolyEval(double lst[],double x) {
+  double total = 0;
+  for ( int i=10 ;i > 0 ; i--) {
+      total = total * x + lst[i-1];
+  }
+  return total;
 }
 
 void coolingLoop(void) {

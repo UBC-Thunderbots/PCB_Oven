@@ -66,29 +66,24 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine for complement oven
 
   //increment the ms counter
   Count1ms += 1;
-
-  if (buzzer_ms != 0) {
-    buzzer_ms--;
-  }
 }
 
 void loop() { 
   /* Only read temperature when buzzer is off */
-  if (buzzer_ms == 0) {
-    Temp = readTemp();
-  }
+
+  Temp = readTemp();
 
   digitalWrite(PULSE_PIN,PULSE);
 
   /* Display State on display as long as there is no abort */
-  if (ABORT == 0 ) {
+  if (ABORT == 0 && state == 0) {
+    lcd.setCursor(0, 0);
+    lcd.print("S:0                         ");
+  }
+  else if (ABORT == 0) {
     lcd.setCursor(0, 0);
     lcd.print("S:");
     lcd.print(state);
-     /*if (millis() - lastmillis >= 1000) {
-       printTemp();
-       lastmillis = millis();
-     }*/
   }
   else {
     // abort command
@@ -107,18 +102,18 @@ void loop() {
     case 0 : 
       PWM = 0;
 
-      // wait until start key is pressed to start the reflow cycle
+      // wait until start key is pressed to start the reflow cycle 
       if (START == 1) {
         /* Variables set to default */
         sec = 0;
         seconds = 0;
         minutes = 0;
         state = 1;
-        //Serial.println(0); // Set temp to zero temporarily to get a Tickmark in the graph for the start time
+        Serial.println(0); // Set temp to zero temporarily to get a Tickmark in the graph for the start time
         
         /* Display next State message */
-        //lcd.setCursor(0,0);
-        //Serial.println("S:1 Ramp to Soak");
+        lcd.setCursor(0,0);
+        lcd.print("S:1 Ramp to Soak");
         /* Display the current time from start of the reflow process in Minutes:seconds */
         printTime();
 
@@ -137,9 +132,9 @@ void loop() {
       if (Temp <= AB_TEMP && minutes >= 1 && seconds >= 20) {
         /* Abort Message */
         lcd.setCursor(0, 0);
-        //Serial.println("System Aborted  ");
+        lcd.print("System Aborted  ");
         lcd.setCursor(0,1);
-        //Serial.println("Check TC        ");
+        lcd.print("Check TC        ");
         
         /* Beep */
         tone(BUZZER_PIN,2048,3000);
@@ -159,8 +154,8 @@ void loop() {
       /* Otherwise advance if greater than soak temperature */
       else if (Temp >= TEMP_SOAK) {
         /* Display State Message */
-      //  lcd.setCursor(0,0);
-        //Serial.println("S:2 Soak            ");
+        lcd.setCursor(0,0);
+        lcd.print("S:2 Soak            ");
 
         PWM = 0;
         
@@ -174,7 +169,7 @@ void loop() {
       /* The next 5 else if statements:
          changing the PWM based on the temperature closer to the setpoint  */
       else if (Temp >= TEMP_SOAK - 5) {
-        PWM = 0;
+        PWM = 5;
       }
       else if (Temp >= TEMP_SOAK - 25) {
         PWM = 10;
@@ -194,7 +189,7 @@ void loop() {
       if ( sec >= TIME_SOAK) {
         /* Display State Message */
         lcd.setCursor(0,0);
-        //Serial.println("S:3 Ramp to Peak    ");
+        lcd.print("S:3 Ramp to Peak    ");
 
         PWM = 100;
 
@@ -214,9 +209,9 @@ void loop() {
       if (Temp >= TEMP_REFL) {
         /* Display State Message */
         lcd.setCursor(0,0);
-        //Serial.println("S:4 Reflow          ");
+        lcd.print("S:4 Reflow          ");
 
-        PWM = 10; // 30% PWM
+        PWM = 5; // 30% PWM
         printTime();
         buzzer_ms = 1250;
         tone(BUZZER_PIN,2048,1000);
@@ -225,8 +220,8 @@ void loop() {
         sec = 0;
       }
       /* Manual changes to PWM due to temperature */
-      else if (Temp >= TEMP_REFL - 10) {
-        PWM = 40;
+      else if (Temp >= TEMP_REFL - 5) {
+        PWM = 30;
       }
       break;
     case 4 : // This is the reflow state
@@ -234,7 +229,7 @@ void loop() {
       if (sec >= TIME_REFL) {
         /* Display State Message */
         lcd.setCursor(0,0);
-        //Serial.println("S:5 Cooling         ");
+        lcd.print("S:5 Cooling         ");
         
         PWM = 0;
         printTime();
@@ -248,9 +243,9 @@ void loop() {
         PWM = 0;
         /* Display Abort message */
         lcd.setCursor(0, 0);
-        //Serial.println("Abort           ");
+        lcd.print("Abort           ");
         lcd.setCursor(0,1);
-        //Serial.println("Temp too hot    ");
+        lcd.print("Temp too hot    ");
         buzzer_ms = 3000;
         tone(BUZZER_PIN,2048,3000);
         delay(2000); // Delay for message before clear

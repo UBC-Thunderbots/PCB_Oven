@@ -58,13 +58,11 @@ void ABORT_M() {
  */
 void printTemp(void) {
   // Read temp if buzzer off
-  if (buzzer_ms == 0) {
-    Temp = readTemp();
-  }
+  Temp = readTemp();
   // Display temp
   lcd.setCursor(0,1);
   lcd.print(Temp);
-  lcd.print(" C  ");
+  lcd.print(" C           ");
 }
 
 /*
@@ -91,19 +89,24 @@ double readTemp ( void ) {
   double ADC_0=0;
   double ADC_1=0;
   double TOTAL_0=0,TOTAL_1=0;
+  double rail;
   double ADC_HJ0;
   double ADC_CJ1;
-  
-  for (int i = 0; i < 1000; i++){
+  int count=0;
+  for (int i = 0; i < 100; i++){
     ADC_0 = analogRead(THERMO_HJ_PIN);
     ADC_1 = analogRead(THERMO_CJ_PIN);
-
-    TOTAL_0 += ADC_0;
-    TOTAL_1 += ADC_1;
+    if(ADC_0 == 0 || ADC_1 == 0) {
+      count+=1;
+    }
+    else {
+      TOTAL_0 += ADC_0;
+      TOTAL_1 += ADC_1;
+    }
   }
 
-  ADC_HJ0 = TOTAL_0 / 1000.0;
-  ADC_CJ1 = TOTAL_1 / 1000.0;
+  ADC_HJ0 = TOTAL_0 / (100.0-count);
+  ADC_CJ1 = TOTAL_1 / (100.0-count);
 
     /*
   Code converted from python to arduino, simplifying tasks
@@ -126,12 +129,13 @@ double readTemp ( void ) {
   double Vc = ADC_CJ1 * 5.0/1023.0;
   double Tc = (Vc - 0.5)*100.0; // from TMP36 datasheet
   double Vh = ADC_HJ0 * 5.0/1023.0;
-  double Temp = mV_to_C(Vh*1000/(100000.0/330.0),Tc);
+  double Temp = mV_to_C(Vh*1000/(98550/325.45),Tc);
+  //Serial.println(Vh*1000);
   //double Th = Vh /(0.000041 * 100000.0/330.0); // 41uV/C is approximate temperature relation slope, R2 = 100K, R1 = 330
-  
   /* Approx Temperature is Cold + Hot */
   return Temp;
 }
+
 //   0 C to 500 C: 0 mV to 20.644 mV
 double mV_to_C_2[] = {0, 25.08355, 0.078601060, -0.25031310,
                0.0831527, -0.01228034, 0.0009804036, -0.000044130300,
@@ -147,7 +151,7 @@ double C_to_mV(double tempC) {
 }
 double mV_to_C(double mVolts, double ColdJunctionTemp){
   double total = mVolts + C_to_mV(ColdJunctionTemp);
-  return PolyEval(mV_to_C_2,ColdJunctionTemp);
+  return PolyEval(mV_to_C_2,total);
 }
         
 double PolyEval(double lst[],double x) {

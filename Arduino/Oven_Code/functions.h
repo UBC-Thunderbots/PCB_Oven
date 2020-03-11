@@ -89,24 +89,19 @@ double readTemp ( void ) {
   double ADC_0=0;
   double ADC_1=0;
   double TOTAL_0=0,TOTAL_1=0;
-  double rail;
   double ADC_HJ0;
   double ADC_CJ1;
-  int count=0;
   for (int i = 0; i < 100; i++){
     ADC_0 = analogRead(THERMO_HJ_PIN);
     ADC_1 = analogRead(THERMO_CJ_PIN);
-    if(ADC_0 == 0 || ADC_1 == 0) {
-      count+=1;
-    }
-    else {
-      TOTAL_0 += ADC_0;
-      TOTAL_1 += ADC_1;
-    }
+
+    TOTAL_0 += ADC_0;
+    TOTAL_1 += ADC_1;
+
   }
 
-  ADC_HJ0 = TOTAL_0 / (100.0-count);
-  ADC_CJ1 = TOTAL_1 / (100.0-count);
+  ADC_HJ0 = TOTAL_0 / (100.0);
+  ADC_CJ1 = TOTAL_1 / (100.0);
 
     /*
   Code converted from python to arduino, simplifying tasks
@@ -129,7 +124,7 @@ double readTemp ( void ) {
   double Vc = ADC_CJ1 * 5.0/1023.0;
   double Tc = (Vc - 0.5)*100.0; // from TMP36 datasheet
   double Vh = ADC_HJ0 * 5.0/1023.0;
-  double Temp = mV_to_C(Vh*1000/(98550/325.45),Tc);
+  double Temp = mV_to_C(Vh*1000/(98550.0/325.45),Tc);
   //Serial.println(Vh*1000);
   //double Th = Vh /(0.000041 * 100000.0/330.0); // 41uV/C is approximate temperature relation slope, R2 = 100K, R1 = 330
   /* Approx Temperature is Cold + Hot */

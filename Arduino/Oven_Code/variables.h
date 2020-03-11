@@ -31,7 +31,7 @@ LiquidCrystal lcd(LCD_RS,LCD_RW,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7);
 #define TIME_SOAK 60 //Set to 60s
 #define TEMP_REFL 220 //Set to 217C
 #define TEMP_ABRT 240 //Set to 235C
-#define TIME_REFL 45  //Set to 45s
+#define TIME_REFL 35  //Set to 45s
 #define TEMP_COOL 60  //Set to 60C
 
 /* Oven Controller Variables */

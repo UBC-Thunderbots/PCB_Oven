@@ -76,11 +76,12 @@ void loop() {
   digitalWrite(PULSE_PIN,PULSE);
 
   /* Display State on display as long as there is no abort */
-  if (ABORT == 0 && state == 0) {
-    lcd.setCursor(0, 0);
-    lcd.print("S:0                         ");
+  if (state == 0) {
+    lcd.setCursor(0,0);
+    lcd.print("S:0                      ");
   }
-  else if (ABORT == 0) {
+  
+  if (ABORT == 0) {
     lcd.setCursor(0, 0);
     lcd.print("S:");
     lcd.print(state);
@@ -112,8 +113,7 @@ void loop() {
         Serial.println(0); // Set temp to zero temporarily to get a Tickmark in the graph for the start time
         
         /* Display next State message */
-        lcd.setCursor(0,0);
-        lcd.print("S:1 Ramp to Soak");
+        
         /* Display the current time from start of the reflow process in Minutes:seconds */
         printTime();
 
@@ -127,6 +127,8 @@ void loop() {
       break;
     case 1 : // Ramp to soak state
       // 100% power
+      lcd.setCursor(0,0);
+      lcd.print("S:1 Ramp to Soak");
 
       /* Abort if temperature is not above 50C in 1:20 */
       if (Temp <= AB_TEMP && minutes >= 1 && seconds >= 20) {
@@ -154,8 +156,6 @@ void loop() {
       /* Otherwise advance if greater than soak temperature */
       else if (Temp >= TEMP_SOAK) {
         /* Display State Message */
-        lcd.setCursor(0,0);
-        lcd.print("S:2 Soak            ");
 
         PWM = 0;
         
@@ -189,7 +189,7 @@ void loop() {
       if ( sec >= TIME_SOAK) {
         /* Display State Message */
         lcd.setCursor(0,0);
-        lcd.print("S:3 Ramp to Peak    ");
+        lcd.print("S:2 Soak            ");
 
         PWM = 100;
 
@@ -206,10 +206,11 @@ void loop() {
       break;
     case 3 : // Ramp to peak state
       /* Advance if past threshold */
+      lcd.setCursor(0,0);
+      lcd.print("S:3 Ramp to Peak    ");
       if (Temp >= TEMP_REFL) {
         /* Display State Message */
-        lcd.setCursor(0,0);
-        lcd.print("S:4 Reflow          ");
+        
 
         PWM = 5; // 30% PWM
         printTime();
@@ -225,11 +226,12 @@ void loop() {
       }
       break;
     case 4 : // This is the reflow state
+      lcd.setCursor(0,0);
+      lcd.print("S:4 Reflow          ");
       /* Advance to next state if finished reflowing */
       if (sec >= TIME_REFL) {
         /* Display State Message */
-        lcd.setCursor(0,0);
-        lcd.print("S:5 Cooling         ");
+        
         
         PWM = 0;
         printTime();
@@ -241,6 +243,7 @@ void loop() {
       /* Temperature above abort threshold, abort */
       else if ( Temp >= TEMP_ABRT) {
         PWM = 0;
+        
         /* Display Abort message */
         lcd.setCursor(0, 0);
         lcd.print("Abort           ");
@@ -259,6 +262,8 @@ void loop() {
       break;
     case 5 : // Cooling state
       // 0% power
+      lcd.setCursor(0,0);
+      lcd.print("S:5 Cooling         ");
       PWM = 0;
       /* When temperature is cool enough to touch PCB let the user know*/
       if (Temp <= TEMP_COOL) {

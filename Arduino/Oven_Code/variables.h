@@ -31,7 +31,7 @@ LiquidCrystal lcd(LCD_RS,LCD_RW,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7);
 #define TIME_SOAK 60 //Set to 60s
 #define TEMP_REFL 220 //Set to 217C
 #define TEMP_ABRT 240 //Set to 235C
-#define TIME_REFL 35  //Set to 45s
+#define TIME_REFL 40  //Set to 45s
 #define TEMP_COOL 60  //Set to 60C
 
 /* Oven Controller Variables */
@@ -43,14 +43,14 @@ int state = 0; // Current State
 /* Timing Variables */
 int timer1_counter; // CLOCK SPEED
 int Count1ms = 0;  // ms timer
-int sec = 0; // second counter for state machine
+int state_seconds = 0; // second counter for state machine
 
 /* Total Time */
 int seconds = 0;
 int minutes = 0;
 
 /* Temperature Hot + Cold */
-double Temp;  
+float Temp;  
 
 /* Pulse output */
 bool PULSE=0;
@@ -59,5 +59,16 @@ bool PULSE=0;
 bool START=0;
 bool ABORT=0;
 
-/* some buzzer timer that does someting honestly i have no idea if i need it*/
-int buzzer_ms=0;
+// sets whether to use pre-determined temperatures in this header, or use the python script for new values.
+int default_param = 0;
+bool skip_python = 0;
+
+struct thermalProfile
+{
+  byte soakTemp;
+  byte soakTime;
+  byte reflowTemp;
+  byte reflowTime;
+};
+typedef struct thermalProfile thermalProfile;                                 // Create a thermal profile structure
+thermalProfile custom;

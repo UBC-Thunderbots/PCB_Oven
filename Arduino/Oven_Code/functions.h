@@ -1,9 +1,8 @@
 /* Functions Header */
-
-/* Functions */
+void initialiseTimer1(void);
 void START_BUTTON(void);
 void ABORT_BUTTON(void);
-void ABORT_M(void);
+void ABORT_MANUAL(void);
 void printTemp(void);
 void printTime(void);
 double readTemp (void);
@@ -11,6 +10,20 @@ double C_to_mV(double tempC);
 double mV_to_C(double mVolts, double ColdJunctionTemp);
 double PolyEval(double lst[],double x);
 void coolingLoop(void);
+int receiveParameter(void);
+
+
+void initialiseTimer1(void) {
+/* Set up timer1 */
+  cli();           // disable global interrupts
+  TCCR1A = 0;
+  TCCR1B = 0;
+  timer1_counter = 65473; // 65536-16MHz/(256*1KHz)  || Using 1KHz Frequency for PWM
+  TCNT1 = timer1_counter;   // preload timer
+  TCCR1B |= (1 << CS12);    // 256 prescaler 
+  TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
+  sei();             // enable global interrupts
+}
 
 /* ISR for External Interrupt 1 */
 void START_BUTTON() {
@@ -28,7 +41,7 @@ void ABORT_BUTTON() {
   }
 }
 
-void ABORT_M() {
+void ABORT_MANUAL() {
 
   PWM = 0;
 
@@ -49,7 +62,7 @@ void ABORT_M() {
   // Reset Variables
   state = 0;
   START = 0;
-  sec = 0;
+  state_seconds = 0;
 }
 
 /*
@@ -57,12 +70,17 @@ void ABORT_M() {
  * Usage: Prints temperature to LCD
  */
 void printTemp(void) {
-  // Read temp if buzzer off
-  Temp = readTemp();
   // Display temp
   lcd.setCursor(0,1);
-  lcd.print(Temp);
-  lcd.print(" C           ");
+  lcd.print(Temp,1);
+  lcd.print((char)0xDF);
+  lcd.print("C     ");
+  if(Temp < 100) {
+    lcd.print(" ");
+  }
+  if(state == 0) {
+    lcd.print("    ");
+  }
 }
 
 /*
@@ -89,35 +107,37 @@ double readTemp ( void ) {
   double ADC_0=0;
   double ADC_1=0;
   double TOTAL_0=0,TOTAL_1=0;
-  double ADC_HJ0;
-  double ADC_CJ1;
-  for (int i = 0; i < 100; i++){
-    ADC_0 = analogRead(THERMO_HJ_PIN);
-    ADC_1 = analogRead(THERMO_CJ_PIN);
+  double ADC_HJ0 = analogRead(THERMO_HJ_PIN);
+  double ADC_CJ1 = analogRead(THERMO_CJ_PIN);
+  /*
+    for (int i = 0; i < 100; i++){
+      ADC_0 = analogRead(THERMO_HJ_PIN);
+      ADC_1 = analogRead(THERMO_CJ_PIN);
 
-    TOTAL_0 += ADC_0;
-    TOTAL_1 += ADC_1;
+      TOTAL_0 += ADC_0;
+      TOTAL_1 += ADC_1;
 
-  }
+    }
 
-  ADC_HJ0 = TOTAL_0 / (100.0);
-  ADC_CJ1 = TOTAL_1 / (100.0);
+    ADC_HJ0 = TOTAL_0 / (100.0);
+    ADC_CJ1 = TOTAL_1 / (100.0);
+  */
 
-    /*
-  Code converted from python to arduino, simplifying tasks
-  kconvert.py: Converts millivots to degrees Celcius and viceversa for K-type thermocouple.
-  By Jesus Calvino-Fraga 2013-2016
-  Constants and functions from http://srdata.nist.gov/its90/download/type_k.tab
-  
-  To use in your Python program:
-  
-  import kconvert
-  print "For 8.15 mV with cold junction at 22 C, temperature is: ", round(kconvert.mV_to_C(8.15, 22.0),2), "C"
-  
-  
-  Evaluate a polynomial in reverse order using Horner's Rule,
-  for example: a3*x^3+a2*x^2+a1*x+a0 = ((a3*x+a2)x+a1)x+a0
-  https://www.keysight.com/upload/cmc_upload/All/5306OSKR-MXD-5501-040107_2.htm?&amp&cc=CA&lc=eng
+  /*
+    Code converted from python to arduino, simplifying tasks
+    kconvert.py: Converts millivots to degrees Celcius and viceversa for K-type thermocouple.
+    By Jesus Calvino-Fraga 2013-2016
+    Constants and functions from http://srdata.nist.gov/its90/download/type_k.tab
+    
+    To use in your Python program:
+    
+    import kconvert
+    print "For 8.15 mV with cold junction at 22 C, temperature is: ", round(kconvert.mV_to_C(8.15, 22.0),2), "C"
+    
+    
+    Evaluate a polynomial in reverse order using Horner's Rule,
+    for example: a3*x^3+a2*x^2+a1*x+a0 = ((a3*x+a2)x+a1)x+a0
+    https://www.keysight.com/upload/cmc_upload/All/5306OSKR-MXD-5501-040107_2.htm?&amp&cc=CA&lc=eng
   */
 
   // convert cold junction voltage to temperature
@@ -132,9 +152,9 @@ double readTemp ( void ) {
 }
 
 //   0 C to 500 C: 0 mV to 20.644 mV
-double mV_to_C_2[] = {0, 25.08355, 0.078601060, -0.25031310,
-               0.0831527, -0.01228034, 0.0009804036, -0.000044130300,
-               0.000001057734, -0.00000001052755};
+double mV_to_C_2[] = {0.0000000E+00, 2.5083550E+01, 7.8601060E-02, -2.5031310E-01,
+             8.3152700E-02, -1.2280340E-02, 9.8040360E-04, -4.4130300E-05,
+             1.0577340E-06, -1.0527550E-08};
 //   0 C to 1372 C
 double C_to_mV_2[] = { -0.176004136860E-1, 0.389212049750E-1, 0.185587700320E-4, -0.994575928740E-7,
               0.318409457190E-9, -0.560728448890E-12, 0.560750590590E-15, -0.320207200030E-18,
@@ -161,9 +181,37 @@ void coolingLoop(void) {
   printTime();
   printTemp();
   // beep
-  buzzer_ms = 1000;
   tone(BUZZER_PIN,2048,1000);
   printTime();
   printTemp();
   delay(2000);// wait 2 seconds
+}
+
+// Description:   1. Receives a thermal profile parameter from Python via the serial port
+//                2. Echoes the received value back to Python to ensure that the correct data has been received
+//                3. Provides user feedback via the buzzer
+// Parameters:    -
+// Returns:       The value of the received thermal profile parameter
+int receiveParameter(void)
+{
+  int value = 0;
+  
+  while(value == 0)
+  {
+    if(Serial.available() > 0)                                                // Check if data has arrived in the serial receive buffer
+    {
+      value = Serial.parseInt();                                              // Read data from the buffer and convert to an integer
+      Serial.print(value);                                                    // Echo received value back to Python
+      Serial.print("\n");
+
+    }
+    Temp = readTemp();
+    lcd.setCursor(0,1);
+    lcd.print(Temp,0);
+    lcd.print((char)0xDF);
+    lcd.print("C");
+  }
+  tone(BUZZER_PIN,2048,1000);
+
+  return value;
 }

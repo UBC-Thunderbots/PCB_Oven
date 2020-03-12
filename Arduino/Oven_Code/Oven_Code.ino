@@ -24,18 +24,8 @@ void setup() {
   digitalWrite(BUZZER_PIN,LOW);
 
   /* Set up external interrupts */
-  attachInterrupt(digitalPinToInterrupt(START_KEY), START_BUTTON, FALLING);
-  attachInterrupt(digitalPinToInterrupt(ABORT_KEY),ABORT_BUTTON,FALLING);
-
-  /* Set up timer1 */
-  noInterrupts();           // disable all interrupts
-  TCCR1A = 0;
-  TCCR1B = 0;
-  timer1_counter = 65473; // 65536-16MHz/(256*1KHz)  || Using 1KHz Frequency for PWM
-  TCNT1 = timer1_counter;   // preload timer
-  TCCR1B |= (1 << CS12);    // 256 prescaler 
-  TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
-  interrupts();             // enable all interrupts
+  //attachInterrupt(digitalPinToInterrupt(START_KEY), START_BUTTON, FALLING);
+  attachInterrupt(digitalPinToInterrupt(ABORT_KEY), ABORT_BUTTON,FALLING);
 }
 
 /* Interrupt Service Routine for Timer 1 */
@@ -46,10 +36,11 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine for complement oven
   pulse_on = 1000 - PWM*10;
   if ( Count1ms >= 1000){
     /* send temperature to serial port and LCD every second */
+    Temp = readTemp();
     printTemp();
-    Serial.println(Temp);
+    Serial.println(Temp,1);
     
-    sec += 1;
+    state_seconds += 1;
     seconds += 1;
     Count1ms = 0;
     if(seconds == 60) {
@@ -64,33 +55,32 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine for complement oven
     PULSE = 1;
   }
 
+  digitalWrite(PULSE_PIN,PULSE);
+
   //increment the ms counter
   Count1ms += 1;
 }
 
 void loop() { 
-  /* Only read temperature when buzzer is off */
+  //Temp = readTemp();
 
-  Temp = readTemp();
-
-  digitalWrite(PULSE_PIN,PULSE);
+  
 
   /* Display State on display as long as there is no abort */
-  if (state == 0) {
-    lcd.setCursor(0,0);
-    lcd.print("S:0                      ");
-  }
-  
   if (ABORT == 0) {
     lcd.setCursor(0, 0);
     lcd.print("S:");
     lcd.print(state);
+    if (state == 0) {
+      lcd.print("               ");
+    }
   }
   else {
     // abort command
-    ABORT_M();
+    ABORT_MANUAL();
     // reset abort variable
     ABORT = 0;
+    skip_python = 1;
   }
   
   /* Print Controller runtime since start */
@@ -102,33 +92,55 @@ void loop() {
   switch (state) {
     case 0 : 
       PWM = 0;
-
-      // wait until start key is pressed to start the reflow cycle 
-      if (START == 1) {
-        /* Variables set to default */
-        sec = 0;
-        seconds = 0;
-        minutes = 0;
-        state = 1;
-        Serial.println(0); // Set temp to zero temporarily to get a Tickmark in the graph for the start time
-        
-        /* Display next State message */
-        
-        /* Display the current time from start of the reflow process in Minutes:seconds */
-        printTime();
-
-        /* State Changed Beep */
-        tone(BUZZER_PIN,2048,1000);
-        buzzer_ms = 1250;
-
-        START = 0;
-        PWM = 100; // PWM of 100%
+      // Obtain thermal profile parameters
+      if (skip_python == 0) {
+        default_param = receiveParameter();
+        if (default_param == 2)
+          default_param = 0;
+        custom.soakTemp = default_param ? TEMP_SOAK : receiveParameter();
+        custom.soakTime = default_param ? TIME_SOAK : receiveParameter();
+        custom.reflowTemp = default_param ? TEMP_REFL : receiveParameter();
+        custom.reflowTime = default_param ? TIME_REFL : receiveParameter();
       }
+      else {
+        lcd.setCursor(0, 0);
+        lcd.print("S:0                    ");
+      }
+
+
+      
+      while(digitalRead(START_KEY) != 0);
+      while(digitalRead(START_KEY) == 0);                                  // Wait for 'set' button to be released      
+      delay(50);
+      // wait until start key is pressed to start the reflow cycle 
+      //if (START == 1) {
+        
+      if (default_param == 0 ) {
+        Serial.print("Start\n");
+      }
+      initialiseTimer1();
+      /* Variables set to default */
+      state_seconds = 0;
+      seconds = 0;
+      minutes = 0;
+      state = 1;
+      
+      /* Display next State message */
+      lcd.setCursor(3,0);
+      lcd.print(" Ramp to Soak");
+      
+      /* Display the current time from start of the reflow process in Minutes:seconds */
+      printTime();
+
+      /* State Changed Beep */
+      tone(BUZZER_PIN,1500,1000);
+      
+      //START = 0;
+      PWM = 100; // PWM of 100%
+      //}
       break;
     case 1 : // Ramp to soak state
       // 100% power
-      lcd.setCursor(0,0);
-      lcd.print("S:1 Ramp to Soak");
 
       /* Abort if temperature is not above 50C in 1:20 */
       if (Temp <= AB_TEMP && minutes >= 1 && seconds >= 20) {
@@ -140,13 +152,12 @@ void loop() {
         
         /* Beep */
         tone(BUZZER_PIN,2048,3000);
-        buzzer_ms = 3000;
         delay(2000); // wait 2 seconds
 
         /* Set variables to default */
         PWM = 0;
         state = 0;
-        sec = 0;
+        state_seconds = 0;
         START = 0;
         lcd.setCursor(0,0);
         lcd.print("                ");
@@ -154,88 +165,79 @@ void loop() {
         lcd.print("                ");
       }
       /* Otherwise advance if greater than soak temperature */
-      else if (Temp >= TEMP_SOAK) {
+      else if (Temp >= custom.soakTemp) {
         /* Display State Message */
-
+        lcd.setCursor(3,0);
+        lcd.print(" Soak               ");
+        
         PWM = 0;
         
         printTime();
-        buzzer_ms = 1250;
         tone(BUZZER_PIN,2048,1000);
         
         state = 2; // Next state
-        sec = 0;
+        state_seconds = 0;
       } 
       /* The next 5 else if statements:
          changing the PWM based on the temperature closer to the setpoint  */
-      else if (Temp >= TEMP_SOAK - 5) {
-        PWM = 5;
-      }
-      else if (Temp >= TEMP_SOAK - 25) {
+      else if (Temp >= custom.soakTemp - 15) {
         PWM = 10;
       }
-      else if (Temp >= TEMP_SOAK - 30) {
+      else if (Temp >= custom.soakTemp - 20) {
         PWM = 20;
       }
-      else if (Temp >= TEMP_SOAK - 35) {
+      else if (Temp >= custom.soakTemp - 30) {
         PWM = 30;
       }
-      else if (Temp >= TEMP_SOAK - 40) {
-        PWM = 40;
-      }
+
       break;
     case 2 : // Preheat / Soak state
       /* Advance if time has elapsed */
-      if ( sec >= TIME_SOAK) {
+      if ( state_seconds >= custom.soakTime) {
         /* Display State Message */
-        lcd.setCursor(0,0);
-        lcd.print("S:2 Soak            ");
+        lcd.setCursor(3,0);
+        lcd.print(" Ramp to Peak    ");
 
         PWM = 100;
 
         printTime();
-        buzzer_ms = 1250;
         tone(BUZZER_PIN,2048,1000);
         
         state = 3; // advance to next state
       }
       /* Start the oven slightly early */
-      else if ( sec >= 30) {
+      else if ( state_seconds >= 30) {
         PWM = 50;
       }
       break;
     case 3 : // Ramp to peak state
       /* Advance if past threshold */
-      lcd.setCursor(0,0);
-      lcd.print("S:3 Ramp to Peak    ");
-      if (Temp >= TEMP_REFL) {
+      if (Temp >= custom.reflowTemp) {
         /* Display State Message */
+        lcd.setCursor(3,0);
+        lcd.print(" Reflow          ");
         
-
-        PWM = 5; // 30% PWM
+        PWM = 5; // 5% PWM
         printTime();
-        buzzer_ms = 1250;
         tone(BUZZER_PIN,2048,1000);
         
         state = 4; // Advance to next state
-        sec = 0;
+        state_seconds = 0;
       }
       /* Manual changes to PWM due to temperature */
-      else if (Temp >= TEMP_REFL - 5) {
+      else if (Temp >= custom.reflowTemp - 10) {
         PWM = 30;
       }
       break;
     case 4 : // This is the reflow state
-      lcd.setCursor(0,0);
-      lcd.print("S:4 Reflow          ");
       /* Advance to next state if finished reflowing */
-      if (sec >= TIME_REFL) {
+      if (state_seconds >= custom.reflowTime) {
         /* Display State Message */
-        
+        lcd.setCursor(3,0);
+        lcd.print(" Cooling         ");
         
         PWM = 0;
         printTime();
-        buzzer_ms = 5000;
         tone(BUZZER_PIN,2048,5000);
         
         state = 5; // Next state
@@ -249,7 +251,6 @@ void loop() {
         lcd.print("Abort           ");
         lcd.setCursor(0,1);
         lcd.print("Temp too hot    ");
-        buzzer_ms = 3000;
         tone(BUZZER_PIN,2048,3000);
         delay(2000); // Delay for message before clear
 
@@ -262,9 +263,6 @@ void loop() {
       break;
     case 5 : // Cooling state
       // 0% power
-      lcd.setCursor(0,0);
-      lcd.print("S:5 Cooling         ");
-      PWM = 0;
       /* When temperature is cool enough to touch PCB let the user know*/
       if (Temp <= TEMP_COOL) {
         for (int i = 0; i < 6; i++) {
@@ -278,7 +276,7 @@ void loop() {
         
         /* Reset variables */
         state = 0;
-        START =0;
+        START = 0;
       }
       break;
   }

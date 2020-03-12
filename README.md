@@ -8,7 +8,7 @@ This was designed from a previous iteration of our reflow oven controller, redes
 
 The current system is shown below:
 
-( insert picture )
+![](Images/ReflowController.jpg)
 
 One test graph is shown below, created with python:
 

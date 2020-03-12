@@ -8,7 +8,7 @@ This was designed from a previous iteration of our reflow oven controller, redes
 
 The current system is shown below:
 
-![](Images/ReflowController.jpg)
+![1: Start Button   2: Abort Button](Images/ReflowController.jpg)
 
 One test graph is shown below, created with python:
 

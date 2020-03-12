@@ -2,7 +2,7 @@
 
 A project for controlling a toaster oven to be able to reflow solder for PCB assembly using Arduino and Python.
 
-# Context
+## Context
 
 This was designed from a previous iteration of our reflow oven controller, redesigning it in Arduino to be maintainable. Our current setup is a perfboard arduino shield, where this repository stores the code for the project, PCB design and schematics, and Thermal profile graphs when reflowing PCB's using python to do the graphing.
 
@@ -14,12 +14,12 @@ One test graph is shown below, created with python:
 
 ![](Images/Reflow_Graphs/Reflow_test_10.png)
 
-# Required Software
+## Required Software
 
 - Arduino IDE or External Code Editor (I use VS Code to flash the Arduino)
 - Python 3.6.7 (I like using [WinPython](http://winpython.github.io/))
 
-# How to use the Controller
+## How to use the Controller
 
 #### Step 1: Connections
 - Plug in the negative and positive terminals for the thermocouple, marked on both the wire and the terminal connector

@@ -180,7 +180,7 @@ void loop() {
       } 
       /* The next 5 else if statements:
          changing the PWM based on the temperature closer to the setpoint  */
-      else if (Temp >= custom.soakTemp - 15) {
+      else if (Temp >= custom.soakTemp - 10) {
         PWM = 10;
       }
       else if (Temp >= custom.soakTemp - 20) {
@@ -188,6 +188,9 @@ void loop() {
       }
       else if (Temp >= custom.soakTemp - 30) {
         PWM = 30;
+      }
+      else if (Temp >= custom.soakTemp - 40) {
+        PWM = 40;
       }
 
       break;
@@ -225,7 +228,7 @@ void loop() {
         state_seconds = 0;
       }
       /* Manual changes to PWM due to temperature */
-      else if (Temp >= custom.reflowTemp - 10) {
+      else if (Temp >= custom.reflowTemp - 15) {
         PWM = 30;
       }
       break;
@@ -277,6 +280,7 @@ void loop() {
         /* Reset variables */
         state = 0;
         START = 0;
+        skip_python = 1;
       }
       break;
   }

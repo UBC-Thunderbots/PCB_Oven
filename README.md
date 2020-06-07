@@ -1,48 +1,72 @@
-# Reflow Oven Controller
+# PCB_Oven README
 
-A project for controlling a toaster oven to be able to reflow solder for PCB assembly using Arduino and Python.
+## Description
 
-## Context
+This repository contains Altium PCB files for UBC Thunderbots' oven pcb. Anyone who wishes to push changes to this project must get permission from the current Electrical Team Lead.
 
-This was designed from a previous iteration of our reflow oven controller, redesigning it in Arduino to be maintainable. Our current setup is a perfboard arduino shield, where this repository stores the code for the project, PCB design and schematics, and Thermal profile graphs when reflowing PCB's using python to do the graphing.
+## Getting Started
 
-The current system is shown below:
+### Required software
 
-![](Images/ReflowController.jpg)
-Legend: 1 - Start Button   2 - Abort Button
+1. git
+2. Altium Designer
 
-One test graph is shown below, created with python:
+### Instructions
 
-![](Images/Reflow_Graphs/Reflow_test_10.png)
+1. Either create a new working branch or select an existing branch other than `master`.
+2. **Recursively clone** (`git clone --recurse-submodules`) your working branch of the repository to your PC (i.e. `C:/Documents/thunderbots/PCB_Oven`).
+3. In Altium Designer, navigate to *Preferences -> Data Management -> Version Control* and ensure **SVN - Subversion** is enabled and **Version 1.9** is selected.
+4. In Altium Designer, navigate to *Preferences -> Data Management -> Design Repositories*.
+5. Within *Design Repositories* click on on *Connect To* -> **SVN**.
+6. In the dialogue box that comes up, fill in the following information:
 
-## Required Software
+Field|Selection/Input
+---|---
+Name|PCB_Oven
+Default Checkout Path|location of local repository (i.e. `C:/Documents/thunderbots/PCB_Oven`)
+Method|https
+Server|github.com
+Server Port|Default
+Repository Subfolder|/UBC-Thunderbots/PCB_Oven
+User Name|*your github login username*
+Password|*your github login password*
 
-- Arduino IDE or External Code Editor (I use VS Code to flash the Arduino)
-- Python 3.6.7 (I like using [WinPython](http://winpython.github.io/))
+7. Click **Test**.
 
-## How to use the Controller
+After your repository is connected, you can add or remove files like a regular Altium Project folder and then commit and push your changes to the remote repository.
 
-#### Step 1: Connections
-- Plug in the negative and positive terminals for the thermocouple, marked on both the wire and the terminal connector
-- Plug in the CTRL/GND/5V connection to the header, keeping in mind the orientation (Yellow/Black/Red)
+[Reference](https://forum.live.altium.com/#posts/235981/718003)
 
-#### Step 2: Arduino IDE
-- Install the Arduino IDE (or use VS Code), in case the code needs to be re-flashed onto the controller
-- Plug in the USB Blaster cable to the Arduino, and check if you see the display on the LCD
-- Re-flash the code if you aren't sure
+### Altium_Libraries Submodule Integration
 
-#### Step 3: Run the Python Script
-- Python prompts for using preset values or to change them
-- Next python prompts to press the START button (shown in layout above)
-- Python starts graphing temperature vs time
-- The Arduino will abort the process automatically if the temperature does not rise fast enough (i.e. the thermocouple fell out of the oven)
-- The process can be aborted by using the abort button (also shown above)
-- The process will start the cooling cycle early if the temperature goes above 240 C (things will start to burn at 230 C keep in mind)
+To enforce component and board compatibility, the Altium_Libraries repository is integrated as a submodule. Before making changes to a project, **ensure that your local `Altium_Libraries/` submodule is current**. This can be done using `git submodule update` in git bash.
 
-#### Step 5: Be patient and wait
-- The controller will beep at you every time it changes state
-- It will also give you a long beep when it is time to open the oven for cooling
-- 6 beeps at the end means it is cool enough inside the oven for you to touch the PCB (usually)
+## Repository Structure
 
-#### Step 6: You're Done!!!!
+At the highest level, there should be the most up to date board revisions, (e.g.
+`oven-v1.0/`), `archive/`, and `Altium_Libraries/`. Any previous versions should be placed in `archive/`. Every board revision directory should abide by the following structure:
 
+```
+<name-v#>/
+├── doc/
+│   ├── <name>.pdf
+│   └── <name>.xslx or <name>.csv
+├── pcb/
+│   ├── guidelines/
+│   ├── <name>.PrjPCB
+│   ├── <name>.SchDoc
+│   └── <name>.PcbDoc
+└── sim/
+```
+
+### doc/
+
+For documentation and relevant non-simulation and layout files. This includes PDFs of the design and bills of materials (`*.xlsx` or `.csv` format).
+
+### pcb/
+
+For any PCB design software files related to the schematic capture and PCB layout of board. This includes schematic and PCB layout guidelines (`guidelines/`).
+
+### sim/
+
+For any simulation files related to the PCB design here.
